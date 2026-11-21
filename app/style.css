@@ -118,6 +118,7 @@ button { cursor: pointer; }
   align-items: start;
 }
 
+/* Roadmap focus: wide rail, list hidden, tighter cards so the whole roadmap fits. */
 body.focus-roadmap .shell { grid-template-columns: 470px minmax(0, 1fr); }
 body.focus-roadmap .list-pane { display: none; }
 body.focus-roadmap .card { padding: 10px 14px; margin-bottom: 10px; }
@@ -127,6 +128,8 @@ body.focus-roadmap .steps strong { font-size: 14px; }
 body.focus-roadmap .missable-card p { font-size: 13px; margin-bottom: 8px; }
 body.focus-roadmap .ledger li { margin-bottom: 6px; }
 body.focus-roadmap .ledger-note { font-size: 12px; margin-bottom: 6px; }
+
+/* Detail focus: roomier detail pane for the close-up shot. */
 body.focus-detail .shell { grid-template-columns: 260px minmax(0, 1fr) 540px; }
 
 .card {
