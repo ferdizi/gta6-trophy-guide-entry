@@ -1,82 +1,43 @@
-'use strict';
+// VICE LEDGER — detail pane: one trophy, its official text, its guide,
+// its source chip, and its earned toggle. One module, one job.
+import { UNCONFIRMED_IDS } from './list.js';
 
-/* The right pane: the selected trophy's official description, its own-words
-   guide, its source chip, and its missable / unconfirmed warnings. */
+function gradeBadge(grade) {
+  const label = grade.charAt(0).toUpperCase() + grade.slice(1);
+  return `<span class="badge badge-${grade}">${label}</span>`;
+}
 
-VL.renderDetail = function () {
-  const pane = document.getElementById('detailPane');
-  pane.innerHTML = '';
-  const trophy = VL.byId.get(VL.selected);
+export function renderDetail(state, trophy, handlers) {
+  const pane = document.getElementById('detail');
   if (!trophy) {
-    const empty = document.createElement('p');
-    empty.className = 'detail-empty';
-    empty.textContent = 'Select a trophy from the list to see its official description, its guide, and its source.';
-    pane.appendChild(empty);
+    pane.innerHTML = '<p>Pick a trophy from the list to see its guide.</p>';
     return;
   }
-  const masked = VL.isMasked(trophy);
 
-  const heading = document.createElement('h3');
-  heading.textContent = masked ? 'Hidden trophy' : trophy.name;
-  pane.appendChild(heading);
+  const earned = state.earned.has(trophy.id);
+  const hidden = handlers.isHidden(trophy);
+  const unconfirmed = UNCONFIRMED_IDS.has(trophy.id);
+  const missable = trophy.missable === 'possible';
 
-  const badges = document.createElement('div');
-  badges.className = 'row-tags';
-  badges.appendChild(VL.makeBadge(trophy.grade));
-  const kind = document.createElement('span');
-  kind.className = 'kind-tag';
-  kind.textContent = kindLabel(trophy.kind);
-  badges.appendChild(kind);
-  if (trophy.hidden) {
-    const hiddenTag = document.createElement('span');
-    hiddenTag.className = 'hidden-tag';
-    hiddenTag.textContent = 'Hidden';
-    badges.appendChild(hiddenTag);
-  }
-  pane.appendChild(badges);
-
-  const official = document.createElement('p');
-  official.className = 'official';
-  official.textContent = masked
-    ? 'Spoiler mode is on: earn this trophy, or reveal it in the list, to read its official description.'
-    : 'Official description: “' + trophy.description + '”';
-  pane.appendChild(official);
-
-  if (!masked) {
-    const guide = document.createElement('p');
-    guide.className = 'guide-text';
-    guide.textContent = trophy.guide;
-    pane.appendChild(guide);
-
-    const source = document.createElement('span');
-    source.className = 'source-chip';
-    source.textContent = 'Source: ' + trophy.source;
-    pane.appendChild(source);
-
-    if (VL.isUnconfirmed(trophy)) {
-      const warn = document.createElement('div');
-      warn.className = 'unconfirmed-box';
-      warn.textContent = 'Method unconfirmed — no reliable steps have been published for this trophy yet. This guide will not invent them.';
-      pane.appendChild(warn);
-    }
-    if (trophy.missable === 'possible') {
-      const note = document.createElement('div');
-      note.className = 'missable-note';
-      note.textContent = 'Possibly missable — see the Missables card in the left rail before you play Chapter 1.';
-      pane.appendChild(note);
-    }
+  if (hidden) {
+    pane.innerHTML = `
+      <h3>Hidden trophy</h3>
+      <div class="detail-tags">${gradeBadge(trophy.grade)}<span class="tag tag-hidden">Hidden</span></div>
+      <p class="official">This trophy is hidden on PlayStation until it is earned. Its name and description stay blurred while spoiler mode is on.</p>
+      <p><button type="button" class="earned-btn" data-reveal="${trophy.id}">Reveal this trophy</button></p>
+      <p class="ledger-note">Revealing only shows this one entry. Spoiler mode stays on for the rest of the list.</p>`;
+    pane.querySelector('[data-reveal]').addEventListener('click', () => handlers.onReveal(trophy.id));
+    return;
   }
 
-  const actions = document.createElement('div');
-  actions.className = 'detail-actions';
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.textContent = VL.earned.has(trophy.id) ? 'Mark as not earned' : 'Mark as earned';
-  toggle.addEventListener('click', () => {
-    if (VL.earned.has(trophy.id)) VL.earned.delete(trophy.id); else VL.earned.add(trophy.id);
-    saveStoredProgress();
-    refreshAll();
-  });
-  actions.appendChild(toggle);
-  pane.appendChild(actions);
-};
+  pane.innerHTML = `
+    <h3>${trophy.name}</h3>
+    <div class="detail-tags">${gradeBadge(trophy.grade)}<span class="tag">${trophy.kind}</span>${trophy.hidden ? '<span class="tag tag-hidden">Hidden</span>' : ''}${missable ? '<span class="tag tag-missable">Possibly missable</span>' : ''}${unconfirmed ? '<span class="tag tag-unconfirmed">Method unconfirmed</span>' : ''}</div>
+    <p class="official">Official description: &ldquo;${trophy.description}&rdquo;</p>
+    <p class="guide-text">${trophy.guide}</p>
+    ${unconfirmed ? '<div class="unconfirmed-box">Method unconfirmed — no reliable steps have been published for this trophy yet. This guide will not invent them.</div>' : ''}
+    ${missable ? '<div class="missable-note">Possibly missable — see the Missables card in the left rail before you play Chapter 1.</div>' : ''}
+    <p><span class="source-chip">Source: ${trophy.source}</span></p>
+    <p><button type="button" class="earned-btn" data-toggle="${trophy.id}" aria-pressed="${earned}">${earned ? '✓ Earned — mark as not earned' : 'Mark as earned'}</button></p>`;
+  pane.querySelector('[data-toggle]').addEventListener('click', () => handlers.onToggle(trophy.id));
+}

@@ -1,116 +1,91 @@
-'use strict';
+// VICE LEDGER — trophy list: filters, search, spoiler blur, checkboxes.
+// One module, one job: turn the state and the trophy data into list rows.
+export const FILTERS = [
+  { key: 'all', label: 'All 55' },
+  { key: 'story', label: 'Story' },
+  { key: 'missable', label: 'Missable' },
+  { key: 'collectibles', label: 'Collectibles' },
+  { key: 'activities', label: 'Activities' },
+  { key: 'strangers', label: 'Strangers & Freaks' },
+  { key: 'unconfirmed', label: 'Method unconfirmed' },
+];
 
-/* The middle pane: the trophy list, its filters, its search box, and the
-   spoiler mask that hides hidden trophies until they are earned or revealed. */
+// The five trophies whose unlock method no guide has confirmed yet.
+export const UNCONFIRMED_IDS = new Set([44, 45, 49, 50, 51]);
 
-VL.isUnconfirmed = function (trophy) {
-  return trophy.guide.indexOf('Method unconfirmed') === 0;
-};
+function matchesFilter(trophy, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'missable') return trophy.missable === 'possible';
+  if (filter === 'unconfirmed') return UNCONFIRMED_IDS.has(trophy.id);
+  return trophy.kind === filter;
+}
 
-VL.rowMatchesFilter = function (trophy) {
-  if (VL.onlyUnearned && VL.earned.has(trophy.id)) return false;
-  if (VL.filter === 'story' && trophy.kind !== 'story') return false;
-  if (VL.filter === 'missable' && trophy.missable !== 'possible') return false;
-  if (VL.filter === 'collectibles' && trophy.kind !== 'collectibles') return false;
-  if (VL.filter === 'activities' && trophy.kind !== 'activities') return false;
-  if (VL.filter === 'strangers' && trophy.kind !== 'strangers') return false;
-  if (VL.filter === 'unconfirmed' && !VL.isUnconfirmed(trophy)) return false;
-  if (VL.query) {
-    const haystack = (trophy.name + ' ' + trophy.description).toLowerCase();
-    if (haystack.indexOf(VL.query) === -1) return false;
-  }
-  return true;
-};
+function gradeBadge(grade) {
+  const label = grade.charAt(0).toUpperCase() + grade.slice(1);
+  return `<span class="badge badge-${grade}">${label}</span>`;
+}
 
-VL.isMasked = function (trophy) {
-  return VL.spoiler && trophy.hidden && !VL.earned.has(trophy.id) && !VL.revealed.has(trophy.id);
-};
+function tagList(trophy) {
+  const tags = [];
+  tags.push(`<span class="tag">${trophy.kind}</span>`);
+  if (trophy.hidden) tags.push('<span class="tag tag-hidden">Hidden</span>');
+  if (trophy.missable === 'possible') tags.push('<span class="tag tag-missable">Possibly missable</span>');
+  if (UNCONFIRMED_IDS.has(trophy.id)) tags.push('<span class="tag tag-unconfirmed">Method unconfirmed</span>');
+  return tags.join('');
+}
 
-VL.makeBadge = function (grade) {
-  const badge = document.createElement('span');
-  badge.className = 'badge badge-' + grade;
-  badge.textContent = gradeLabel(grade);
-  return badge;
-};
+function isSpoilerHidden(state, trophy) {
+  return state.spoiler && trophy.hidden && !state.earned.has(trophy.id) && !state.revealed.has(trophy.id);
+}
 
-VL.renderList = function () {
-  const list = document.getElementById('trophyList');
-  list.innerHTML = '';
-  const shown = VL.trophies.filter((trophy) => VL.rowMatchesFilter(trophy));
-  document.getElementById('listCount').textContent = shown.length + ' shown';
-
-  shown.forEach((trophy) => {
-    const row = document.createElement('li');
-    row.className = 'trophy-row';
-    if (VL.earned.has(trophy.id)) row.classList.add('earned');
-    if (VL.selected === trophy.id) row.classList.add('selected');
-
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    box.checked = VL.earned.has(trophy.id);
-    box.setAttribute('aria-label', 'Mark ' + trophy.name + ' earned');
-    box.addEventListener('change', () => {
-      if (box.checked) VL.earned.add(trophy.id); else VL.earned.delete(trophy.id);
-      saveStoredProgress();
-      refreshAll();
+export function renderTrophyList(state, handlers) {
+  const chips = document.getElementById('filter-chips');
+  chips.innerHTML = FILTERS.map((f) => (
+    `<button type="button" class="chip" data-filter="${f.key}" aria-pressed="${state.filter === f.key}">${f.label}</button>`
+  )).join('');
+  chips.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      state.filter = chip.dataset.filter;
+      renderTrophyList(state, handlers);
     });
-    row.appendChild(box);
-
-    const body = document.createElement('div');
-    body.className = 'row-body';
-    const masked = VL.isMasked(trophy);
-
-    const name = document.createElement('div');
-    name.className = 'row-name' + (masked ? ' masked' : '');
-    name.textContent = masked ? 'Hidden trophy' : trophy.name;
-    body.appendChild(name);
-
-    const desc = document.createElement('div');
-    desc.className = 'row-desc' + (masked ? ' masked' : '');
-    desc.textContent = masked ? 'Earn this trophy to reveal its name and description.' : trophy.description;
-    body.appendChild(desc);
-
-    const tags = document.createElement('div');
-    tags.className = 'row-tags';
-    tags.appendChild(VL.makeBadge(trophy.grade));
-    const kind = document.createElement('span');
-    kind.className = 'kind-tag';
-    kind.textContent = kindLabel(trophy.kind);
-    tags.appendChild(kind);
-    if (trophy.hidden) {
-      const hiddenTag = document.createElement('span');
-      hiddenTag.className = 'hidden-tag';
-      hiddenTag.textContent = 'Hidden';
-      tags.appendChild(hiddenTag);
-    }
-    if (trophy.missable === 'possible') {
-      const miss = document.createElement('span');
-      miss.className = 'missable-tag';
-      miss.textContent = 'Possibly missable';
-      tags.appendChild(miss);
-    }
-    body.appendChild(tags);
-
-    if (masked) {
-      const reveal = document.createElement('button');
-      reveal.type = 'button';
-      reveal.className = 'reveal-btn';
-      reveal.textContent = 'Reveal';
-      reveal.addEventListener('click', (event) => {
-        event.stopPropagation();
-        VL.revealed.add(trophy.id);
-        VL.renderList();
-      });
-      body.appendChild(reveal);
-    }
-
-    row.appendChild(body);
-    row.addEventListener('click', (event) => {
-      if (event.target === box) return;
-      VL.selected = trophy.id;
-      VL.renderList();
-      VL.renderDetail();
-    });
-    list.appendChild(row);
   });
-};
+
+  const needle = state.search.trim().toLowerCase();
+  const shown = state.trophies.filter((trophy) => {
+    if (!matchesFilter(trophy, state.filter)) return false;
+    if (state.onlyUnearned && state.earned.has(trophy.id)) return false;
+    if (needle && !trophy.name.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+
+  document.getElementById('list-count').textContent = `${shown.length} shown`;
+
+  const list = document.getElementById('trophy-list');
+  list.innerHTML = shown.map((trophy) => {
+    const earned = state.earned.has(trophy.id);
+    const hidden = isSpoilerHidden(state, trophy);
+    const selected = state.selectedId === trophy.id;
+    return `<li class="trophy-row${earned ? ' earned' : ''}${selected ? ' selected' : ''}${hidden ? ' spoiler-hidden' : ''}" data-id="${trophy.id}">
+      <input type="checkbox" ${earned ? 'checked' : ''} aria-label="Mark ${trophy.name} as earned">
+      <div class="trophy-main">
+        <div class="trophy-name">${trophy.name}</div>
+        <div class="trophy-desc">${trophy.description}</div>
+        <div class="trophy-tags">${gradeBadge(trophy.grade)}${tagList(trophy)}</div>
+        ${hidden ? '<button type="button" class="reveal-btn">Reveal</button>' : ''}
+      </div>
+    </li>`;
+  }).join('');
+
+  list.querySelectorAll('.trophy-row').forEach((row) => {
+    const id = Number(row.dataset.id);
+    row.addEventListener('click', (event) => {
+      if (event.target.matches('input[type="checkbox"]')) return;
+      if (event.target.matches('.reveal-btn')) {
+        handlers.onReveal(id);
+        return;
+      }
+      handlers.onSelect(id);
+    });
+    row.querySelector('input[type="checkbox"]').addEventListener('change', () => handlers.onToggle(id));
+  });
+}
