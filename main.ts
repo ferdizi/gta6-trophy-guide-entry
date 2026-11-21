@@ -1,16 +1,10 @@
-// VICE LEDGER — a gta6-trophy-guide-01 entry (Node 22, standard library only). Recorder-safe
-// rebuild under recording 01a1fc3a: every counted file rewritten in one live recorded session.
-// The guide is this directory's app/ folder: plain static files a browser opens at
-// app/index.html (ES modules, CSS, no build step), offline — it loads nothing over the network,
-// and its trophy list and guides are app/data/trophies.json. The program hands it in: it copies
-// app/ and screenshots/ from beside this file to /output and writes /output/dossier.json, the
-// summary the judge reads (your screenshots, the first load's files and bytes, and your source),
-// with the vendored make.fun library. Leave vendor/makefun-frontend.ts as it is: the scorer
-// requires dossier.json to be byte for byte what its own copy writes.
+// VICE LEDGER — the hand-in program for gta6-trophy-guide-01 (Node 22, standard
+// library only). It copies the guide's app/ folder and its screenshots/ folder
+// from beside this file into /output, then writes /output/dossier.json with the
+// vendored make.fun library — the summary the judge reads. The library under
+// vendor/ stays exactly as the kit shipped it: the scorer rebuilds the dossier
+// with its own copy and the two must match byte for byte.
 //
-// A case dossier, not a bare checklist: a three-pane ledger with the platinum roadmap, the one
-// possibly-missable trophy flagged, cited guides in the maker's own words, a spoiler shield, and a
-// 100% completion sub-ledger. Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 

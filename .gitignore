@@ -1,1 +1,5 @@
+# Build output from main.ts, local tooling, and stray editor files.
 out/
+node_modules/
+.DS_Store
+*.log
