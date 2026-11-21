@@ -112,7 +112,7 @@ function renderProgress() {
     { label: 'Meditations', trophy: 28, value: 18, total: 18, need: 'need 15 of 18' },
     { label: 'Stunts', trophy: 15, value: 250, total: 397, need: 'need 300 of 397' },
     { label: 'Vehicles', trophy: 35, value: 100, total: 277, need: 'need 200 of 277' },
-    { label: 'Animals', trophy: 29, value: 0, total: 255, need: 'need 100 of 255', note: 'tracked in game' },
+    { label: 'Animals', trophy: 29, value: 0, total: 255, need: 'need 100 of 255' },
   ];
   els.ledger.replaceChildren();
   for (const r of rows) {
