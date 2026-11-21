@@ -3,23 +3,107 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GTA VI trophy checklist</title>
+<title>VICE LEDGER — GTA VI Trophy Guide &amp; Tracker</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>GTA VI trophy checklist</h1>
-  <p id="progress">0 of 55 earned</p>
+<header class="masthead">
+  <div class="masthead-title">
+    <h1>VICE LEDGER</h1>
+    <p class="tagline">Grand Theft Auto VI — every trophy, tracked. A case dossier for the road to platinum.</p>
+  </div>
+  <div class="masthead-progress">
+    <div class="progress-line"><span id="progressText">0 of 55 earned</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar" role="progressbar" aria-label="Trophies earned"><span id="segBronze" class="seg seg-bronze"></span><span id="segSilver" class="seg seg-silver"></span><span id="segGold" class="seg seg-gold"></span><span id="segPlatinum" class="seg seg-platinum"></span></div>
+    <div class="masthead-tools">
+      <label class="spoiler-toggle"><input type="checkbox" id="spoiler" checked> Spoiler shield</label>
+      <button id="exportBtn" type="button">Export progress</button>
+      <label class="import-btn">Import progress <input id="importFile" type="file" accept="application/json"></label>
+    </div>
+  </div>
 </header>
-<div class="controls">
-  <label>Grade <select id="grade"><option value="all">All</option><option value="platinum">Platinum</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="bronze">Bronze</option></select></label>
-  <button id="export" type="button">Export progress</button>
-  <label class="import">Import progress <input id="import" type="file" accept="application/json"></label>
-</div>
-<table>
-  <thead><tr><th>Earned</th><th>Trophy</th><th>Grade</th><th>How to get it</th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
+
+<main class="shell">
+  <aside class="rail" aria-label="Roadmap and reference">
+    <section class="card roadmap-card">
+      <h2>Roadmap to Platinum</h2>
+      <ol class="steps">
+        <li>
+          <strong>Step 1 — Story + optional missions</strong>
+          <span>~60–80 hours. Play the story; do the Chapter 1 meditation; take optional missions as they appear (100% needs any 100 of several hundred); scan every new vehicle with WAiNK (100% needs 200 of 277); study animals through binoculars (100% needs 100 of 255).</span>
+          <em id="step1Progress">Story 0 of 12 earned</em>
+        </li>
+        <li>
+          <strong>Step 2 — The 100% checklist</strong>
+          <span>~100 hours. The checklist appears after the story under Progress &gt; Stats &gt; 100% Completion: 70 of 80 challenges, 15 of 18 card sets, 15 of 18 meditations, 300 of 397 stunts, 200 of 277 vehicles, 100 of 255 animals, 100 optional missions, all 39 illegal operations, all 8 bank vaults, Bret's 15 target decks.</span>
+          <em id="step2Progress">Checklist trophies 0 of 28 earned</em>
+        </li>
+        <li>
+          <strong>Step 3 — Strangers &amp; Freaks + cleanup</strong>
+          <span>~10 hours. Eight stranger strands — not part of 100% — then clean up whatever is left. Platinum follows. Total: ~200 hours (PowerPyx), 250–300 hours (Push Square). Difficulty 4/10. Cheats disable trophies.</span>
+          <em id="step3Progress">Strangers 0 of 7 earned</em>
+        </li>
+      </ol>
+    </section>
+
+    <section class="card missable-card" id="missableCard">
+      <h2>Missables</h2>
+      <p><strong>Do this first: Positive Mental Attitude.</strong> The only trophy any source flags as possibly missable. One Chapter 1 morning meditation at Jason's house — Lucia meditates on the balcony; follow her and accept the optional quest — is gone after Chapter 1. It is unclear whether the trophy needs that one spot, since it is not marked like the other 18. PowerPyx flags it; Push Square lists no missables. All 12 story trophies are unmissable, Kenton returns later, and the Kingpin Bowling robbery returns later.</p>
+      <button type="button" id="missableJump">Open it in the ledger</button>
+    </section>
+
+    <section class="card ledger-card">
+      <h2>100% Completion Ledger</h2>
+      <p class="ledger-note">The numbers the platinum actually needs, from the official descriptions. A bar fills when its trophy is earned.</p>
+      <ul class="ledger" id="ledger"></ul>
+    </section>
+
+    <section class="card tally-card">
+      <h2>Grade Tally</h2>
+      <ul class="tally" id="tally"></ul>
+      <p class="tally-note">1 Platinum · 2 Gold · 6 Silver · 46 Bronze · 28 hidden · 0 online · one playthrough.</p>
+    </section>
+
+    <section class="card sources-card">
+      <h2>How sources are cited</h2>
+      <p>Every guide below is written in our own words from the facts in one named source, shown as a citation chip beside the guide. A specific location or step with no source gets no credit, so nothing here claims a step no source published: the five trophies with no reliable method say so plainly instead of inventing one. Sources: Push Square's trophy guide, PowerPyx (via sixshore), Insider Gaming's full list, GamesRadar+ (via gamemapa).</p>
+    </section>
+  </aside>
+
+  <section class="list-pane" aria-label="Trophy list">
+    <div class="filters" role="group" aria-label="Filter trophies">
+      <button type="button" class="chip active" data-filter="all">All 55</button>
+      <button type="button" class="chip" data-filter="story">Story</button>
+      <button type="button" class="chip" data-filter="missable">Missable</button>
+      <button type="button" class="chip" data-filter="collectibles">Collectibles</button>
+      <button type="button" class="chip" data-filter="activities">Activities</button>
+      <button type="button" class="chip" data-filter="strangers">Strangers &amp; Freaks</button>
+      <button type="button" class="chip" data-filter="unconfirmed">Method unconfirmed</button>
+    </div>
+    <div class="list-tools">
+      <input type="search" id="search" placeholder="Search a trophy by name…" aria-label="Search trophies">
+      <select id="gradeFilter" aria-label="Filter by grade">
+        <option value="all">All grades</option>
+        <option value="platinum">Platinum</option>
+        <option value="gold">Gold</option>
+        <option value="silver">Silver</option>
+        <option value="bronze">Bronze</option>
+      </select>
+      <label class="unearned-toggle"><input type="checkbox" id="unearnedOnly"> Only unearned</label>
+    </div>
+    <p class="list-count" id="listCount"></p>
+    <ul class="trophy-list" id="trophyList"></ul>
+  </section>
+
+  <aside class="detail-pane" aria-label="Trophy detail">
+    <div id="detail"></div>
+  </aside>
+</main>
+
+<footer class="colophon">
+  <p>VICE LEDGER — an unofficial fan guide. Grand Theft Auto and GTA are trademarks of Take-Two Interactive; this guide is not affiliated with Rockstar Games. Trophy names, descriptions and grades are the PlayStation 5 list as read on launch day (19 Nov 2026); guides are written in our own words and cite their sources. Works offline: every file it loads is in this folder.</p>
+</footer>
+
 <script type="module" src="app.js"></script>
 </body>
 </html>
